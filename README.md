@@ -5,8 +5,8 @@ summative assignment. No frameworks, no backend — all data lives in the browse
 `localStorage`.
 
 **Theme:** Student Finance Tracker
-**Live demo:** `<add your GitHub Pages URL here>`
-**Repo:** `<add your repo URL here>`
+**Live demo:** `<https://github.com/emutangana>`
+**Repo:** `<https://github.com/emutangana/Legder.git>`
 
 ---
 
