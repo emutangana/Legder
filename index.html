@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ledger &mdash; Student Finance Tracker</title>
 <style>
-  /* ============================================================
-     TOKENS
-     ============================================================ */
+  
   :root{
     --ink:#1B2A4A;
     --ink-soft:#3C4D72;
@@ -36,9 +34,6 @@
     line-height:1.5;
   }
 
-  /* ============================================================
-     ACCESSIBILITY HELPERS
-     ============================================================ */
   .skip-link{
     position:absolute;
     left:-999px;
@@ -68,9 +63,6 @@
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
   }
 
-  /* ============================================================
-     LAYOUT SHELL
-     ============================================================ */
   header.site-header{
     background:var(--ink);
     color:var(--paper);
@@ -176,9 +168,6 @@
   }
   footer.site-footer a{ color:var(--gold); }
 
-  /* ============================================================
-     ABOUT
-     ============================================================ */
   .about-card{
     background:#fff;
     border:1px solid var(--line);
@@ -202,9 +191,7 @@
   }
   .about-links a:hover{ color:var(--green); border-color:var(--green); }
 
-  /* ============================================================
-     DASHBOARD / STATS - "receipt strip"
-     ============================================================ */
+
   .stats-grid{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
@@ -295,9 +282,6 @@
     white-space:nowrap;
   }
 
-  /* ============================================================
-     FORM
-     ============================================================ */
   .ledger-form{
     background:#fff;
     border:1px solid var(--line);
@@ -376,9 +360,7 @@
   .btn-danger:hover{ background:var(--brick); color:#fff; }
   .btn-small{ padding:.35rem .65rem; font-size:.8rem; }
 
-  /* ============================================================
-     TABLE / RECORDS
-     ============================================================ */
+
   .table-toolbar{
     display:flex;
     gap:.75rem;
@@ -511,9 +493,9 @@
     .record-cards{ display:flex; }
   }
 
-  /* ============================================================
-     SETTINGS
-     ============================================================ */
+
+
+    
   .settings-grid{
     display:grid;
     grid-template-columns:1fr;
@@ -559,9 +541,8 @@
     font-size:.85rem;
   }
 
-  /* ============================================================
-     LIVE REGIONS / TOASTS
-     ============================================================ */
+
+    
   #toast-region{
     position:fixed;
     bottom:1.25rem;
