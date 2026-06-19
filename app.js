@@ -1,6 +1,4 @@
-/* ==========================================================================
-   STUDENT FINANCE TRACKER — PROCEDURAL CODE REVISION
-   ========================================================================== */
+
 
 // 1. GLOBAL VARIABLES & DATA TYPES
 let records = []; 
