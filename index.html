@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger &mdash; Student Finance Tracker</title>
+<style>
+  /* ============================================================
+     TOKENS
+     ============================================================ */
+  :root{
+    --ink:#1B2A4A;
+    --ink-soft:#3C4D72;
+    --paper:#FAF6EE;
+    --paper-dim:#F0E9D8;
+    --green:#2D6A4F;
+    --green-bg:#E4F0E9;
+    --brick:#A4452E;
+    --brick-bg:#F6E4DF;
+    --gold:#C9A24B;
+    --line:#D8CFB8;
+    --focus:#1B6EF3;
+    --radius:6px;
+    --display-font: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono-font: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body-font);
+    line-height:1.5;
+  }
+
+  /* ============================================================
+     ACCESSIBILITY HELPERS
+     ============================================================ */
+  .skip-link{
+    position:absolute;
+    left:-999px;
+    top:0;
+    background:var(--ink);
+    color:var(--paper);
+    padding:.6rem 1rem;
+    z-index:200;
+    border-radius:0 0 var(--radius) 0;
+  }
+  .skip-link:focus{
+    left:0;
+  }
+  .visually-hidden{
+    position:absolute;
+    width:1px;height:1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+  }
+  :focus-visible{
+    outline:3px solid var(--focus);
+    outline-offset:2px;
+    border-radius:2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  /* ============================================================
+     LAYOUT SHELL
+     ============================================================ */
+  header.site-header{
+    background:var(--ink);
+    color:var(--paper);
+    padding:1rem 1.25rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky;
+    top:0;
+    z-index:100;
+    border-bottom:3px solid var(--gold);
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:.5rem;
+    font-family:var(--display-font);
+  }
+  .brand-mark{
+    font-size:1.5rem;
+    font-weight:700;
+    letter-spacing:.02em;
+  }
+  .brand-tag{
+    font-size:.75rem;
+    color:var(--gold);
+    font-family:var(--mono-font);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+
+  nav.primary-nav ul{
+    display:flex;
+    gap:.25rem;
+    list-style:none;
+    margin:0;
+    padding:0;
+    flex-wrap:wrap;
+  }
+  nav.primary-nav a{
+    color:var(--paper);
+    text-decoration:none;
+    padding:.5rem .8rem;
+    border-radius:var(--radius);
+    font-size:.92rem;
+    display:inline-block;
+  }
+  nav.primary-nav a:hover,
+  nav.primary-nav a:focus-visible{
+    background:rgba(255,255,255,0.12);
+  }
+  nav.primary-nav a[aria-current="page"]{
+    background:var(--gold);
+    color:var(--ink);
+    font-weight:600;
+  }
+
+  .nav-toggle{
+    display:none;
+    background:none;
+    border:1px solid var(--paper);
+    color:var(--paper);
+    padding:.4rem .6rem;
+    border-radius:var(--radius);
+    font-size:1.1rem;
+  }
+
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:1.5rem 1.25rem 4rem;
+  }
+
+  section{
+    margin-bottom:2.5rem;
+  }
+  section > h2{
+    font-family:var(--display-font);
+    font-size:1.5rem;
+    border-bottom:2px dashed var(--line);
+    padding-bottom:.5rem;
+    margin-bottom:1.25rem;
+    color:var(--ink);
+  }
+  section > h2 .eyebrow{
+    display:block;
+    font-family:var(--mono-font);
+    font-size:.7rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:.25rem;
+    font-weight:400;
+  }
+
+  footer.site-footer{
+    background:var(--ink);
+    color:var(--paper-dim);
+    text-align:center;
+    padding:1.5rem;
+    font-size:.85rem;
+    font-family:var(--mono-font);
+  }
+  footer.site-footer a{ color:var(--gold); }
+
+  /* ============================================================
+     ABOUT
+     ============================================================ */
+  .about-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-left:4px solid var(--gold);
+    border-radius:var(--radius);
+    padding:1.25rem 1.5rem;
+  }
+  .about-card p{margin:.4rem 0;}
+  .about-links{
+    display:flex;
+    gap:1rem;
+    margin-top:.75rem;
+    flex-wrap:wrap;
+  }
+  .about-links a{
+    color:var(--ink);
+    text-decoration:none;
+    font-family:var(--mono-font);
+    font-size:.85rem;
+    border-bottom:1px solid var(--ink-soft);
+  }
+  .about-links a:hover{ color:var(--green); border-color:var(--green); }
+
+  /* ============================================================
+     DASHBOARD / STATS - "receipt strip"
+     ============================================================ */
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .stat-cell{
+    background:#fff;
+    padding:1rem 1.1rem;
+    position:relative;
+  }
+  .stat-cell .stat-label{
+    font-family:var(--mono-font);
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    display:block;
+    margin-bottom:.35rem;
+  }
+  .stat-cell .stat-value{
+    font-family:var(--mono-font);
+    font-size:1.4rem;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .stat-cell.is-warning .stat-value{ color:var(--brick); }
+  .stat-cell.is-good .stat-value{ color:var(--green); }
+
+  .cap-bar-wrap{
+    margin-top:1.25rem;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:1rem 1.25rem;
+  }
+  .cap-bar-track{
+    height:10px;
+    background:var(--paper-dim);
+    border-radius:5px;
+    overflow:hidden;
+    margin:.6rem 0;
+  }
+  .cap-bar-fill{
+    height:100%;
+    background:var(--green);
+    border-radius:5px;
+    transition:width .4s ease, background-color .3s ease;
+    width:0%;
+  }
+  .cap-bar-fill.over{ background:var(--brick); }
+  #cap-message{
+    font-family:var(--mono-font);
+    font-size:.85rem;
+    padding:.4rem .6rem;
+    border-radius:var(--radius);
+  }
+  #cap-message.status-ok{ background:var(--green-bg); color:var(--green); }
+  #cap-message.status-over{ background:var(--brick-bg); color:var(--brick); font-weight:600; }
+
+  .trend-row{
+    display:flex;
+    align-items:flex-end;
+    gap:.4rem;
+    height:80px;
+    margin-top:1rem;
+    padding:0 .25rem;
+  }
+  .trend-bar{
+    flex:1;
+    background:var(--gold);
+    border-radius:3px 3px 0 0;
+    min-height:2px;
+    position:relative;
+  }
+  .trend-bar .trend-bar-label{
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:.62rem;
+    color:var(--ink-soft);
+    font-family:var(--mono-font);
+    margin-top:.25rem;
+    white-space:nowrap;
+  }
+
+  /* ============================================================
+     FORM
+     ============================================================ */
+  .ledger-form{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:1.5rem;
+  }
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1rem;
+  }
+  @media (min-width:560px){
+    .form-grid{ grid-template-columns:1fr 1fr; }
+    .form-grid .field-full{ grid-column:1 / -1; }
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:.35rem;
+  }
+  .field label{
+    font-size:.85rem;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .field input,
+  .field select{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:.55rem .7rem;
+    font-size:.95rem;
+    font-family:var(--body-font);
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .field input:focus-visible,
+  .field select:focus-visible{
+    background:#fff;
+  }
+  .field input[aria-invalid="true"]{
+    border-color:var(--brick);
+    background:var(--brick-bg);
+  }
+  .field-error{
+    font-size:.78rem;
+    color:var(--brick);
+    font-family:var(--mono-font);
+    min-height:1.1em;
+  }
+  .field-hint{
+    font-size:.75rem;
+    color:var(--ink-soft);
+  }
+
+  .form-actions{
+    display:flex;
+    gap:.75rem;
+    margin-top:1.5rem;
+    flex-wrap:wrap;
+  }
+
+  button{
+    font-family:var(--body-font);
+    font-size:.9rem;
+    border-radius:var(--radius);
+    border:1px solid transparent;
+    padding:.6rem 1.1rem;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn-primary{ background:var(--ink); color:var(--paper); }
+  .btn-primary:hover{ background:var(--ink-soft); }
+  .btn-secondary{ background:#fff; color:var(--ink); border-color:var(--line); }
+  .btn-secondary:hover{ background:var(--paper-dim); }
+  .btn-danger{ background:var(--brick-bg); color:var(--brick); border-color:var(--brick); }
+  .btn-danger:hover{ background:var(--brick); color:#fff; }
+  .btn-small{ padding:.35rem .65rem; font-size:.8rem; }
+
+  /* ============================================================
+     TABLE / RECORDS
+     ============================================================ */
+  .table-toolbar{
+    display:flex;
+    gap:.75rem;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-bottom:1rem;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:.9rem 1rem;
+  }
+  .table-toolbar .field{ flex:1; min-width:200px; margin-bottom:0; }
+  .table-toolbar label{ font-size:.78rem; }
+  .toolbar-checkbox{
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    font-size:.82rem;
+    white-space:nowrap;
+  }
+  .toolbar-checkbox input{ width:auto; }
+
+  table.ledger-table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  table.ledger-table caption{
+    text-align:left;
+    font-family:var(--mono-font);
+    font-size:.75rem;
+    color:var(--ink-soft);
+    padding:.5rem 0;
+  }
+  table.ledger-table th,
+  table.ledger-table td{
+    text-align:left;
+    padding:.7rem .9rem;
+    border-bottom:1px dashed var(--line);
+    font-size:.9rem;
+  }
+  table.ledger-table thead th{
+    background:var(--ink);
+    color:var(--paper);
+    font-weight:600;
+    font-size:.8rem;
+    border-bottom:none;
+  }
+  table.ledger-table thead th button{
+    background:none;
+    border:none;
+    color:inherit;
+    font-weight:600;
+    padding:0;
+    font-size:inherit;
+    display:inline-flex;
+    align-items:center;
+    gap:.3rem;
+  }
+  table.ledger-table thead th button:hover{ text-decoration:underline; }
+  table.ledger-table tbody tr:hover{ background:var(--paper-dim); }
+  table.ledger-table td.amount-cell{
+    font-family:var(--mono-font);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  table.ledger-table td.actions-cell{
+    display:flex;
+    gap:.4rem;
+    white-space:nowrap;
+  }
+  table.ledger-table mark{
+    background:var(--gold);
+    color:var(--ink);
+    border-radius:2px;
+    padding:0 .1em;
+  }
+  .category-pill{
+    display:inline-block;
+    font-size:.72rem;
+    font-family:var(--mono-font);
+    padding:.15rem .55rem;
+    border-radius:999px;
+    background:var(--green-bg);
+    color:var(--green);
+  }
+
+  .empty-state{
+    text-align:center;
+    padding:3rem 1.5rem;
+    color:var(--ink-soft);
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+    background:#fff;
+  }
+  .empty-state .empty-icon{ font-size:2rem; display:block; margin-bottom:.5rem; }
+
+  /* Mobile card view for records */
+  .record-cards{ display:none; flex-direction:column; gap:.75rem; }
+  .record-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:1rem;
+  }
+  .record-card .rc-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:.5rem;
+    margin-bottom:.5rem;
+  }
+  .record-card .rc-desc{ font-weight:600; }
+  .record-card .rc-amount{ font-family:var(--mono-font); font-weight:700; white-space:nowrap; }
+  .record-card .rc-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:.78rem;
+    color:var(--ink-soft);
+    margin-bottom:.6rem;
+  }
+  .record-card .rc-actions{ display:flex; gap:.5rem; }
+
+  @media (max-width:680px){
+    table.ledger-table{ display:none; }
+    .record-cards{ display:flex; }
+  }
+
+  /* ============================================================
+     SETTINGS
+     ============================================================ */
+  .settings-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1.5rem;
+  }
+  @media (min-width:720px){
+    .settings-grid{ grid-template-columns:1fr 1fr; }
+  }
+  .settings-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:1.25rem 1.5rem;
+  }
+  .settings-card h3{
+    font-family:var(--display-font);
+    margin-top:0;
+    font-size:1.1rem;
+    border-bottom:1px solid var(--line);
+    padding-bottom:.5rem;
+  }
+  .rate-row{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    margin-bottom:.6rem;
+  }
+  .rate-row label{ flex:0 0 90px; font-size:.85rem; }
+  .rate-row input{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:.45rem .6rem;
+    font-family:var(--mono-font);
+  }
+  .import-export-row{
+    display:flex;
+    gap:.75rem;
+    flex-wrap:wrap;
+    margin-top:.75rem;
+  }
+  input[type="file"]{
+    font-size:.85rem;
+  }
+
+  /* ============================================================
+     LIVE REGIONS / TOASTS
+     ============================================================ */
+  #toast-region{
+    position:fixed;
+    bottom:1.25rem;
+    right:1.25rem;
+    display:flex;
+    flex-direction:column;
+    gap:.5rem;
+    z-index:300;
+    max-width:320px;
+  }
+  .toast{
+    background:var(--ink);
+    color:var(--paper);
+    padding:.7rem 1rem;
+    border-radius:var(--radius);
+    font-size:.85rem;
+    box-shadow:0 4px 14px rgba(0,0,0,.2);
+    animation:toast-in .25s ease;
+    border-left:4px solid var(--gold);
+  }
+  .toast.toast-error{ border-left-color:var(--brick); }
+  @keyframes toast-in{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  dialog#confirm-dialog{
+    border:none;
+    border-radius:var(--radius);
+    padding:1.5rem;
+    max-width:360px;
+    box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+  dialog#confirm-dialog::backdrop{
+    background:rgba(27,42,74,0.5);
+  }
+  dialog#confirm-dialog h3{
+    margin-top:0;
+    font-family:var(--display-font);
+  }
+  dialog#confirm-dialog .dialog-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:.6rem;
+    margin-top:1.25rem;
+  }
+
+  /* ============================================================
+     RESPONSIVE NAV (~360px breakpoint)
+     ============================================================ */
+  .nav-close{ display:none; }
+
+  @media (max-width:680px){
+    .nav-toggle{ display:inline-block; }
+    nav.primary-nav{
+      position:fixed;
+      inset:0;
+      background:var(--ink);
+      transform:translateX(100%);
+      transition:transform .25s ease;
+      padding:5rem 1.5rem 2rem;
+      z-index:150;
+      visibility:hidden;
+    }
+    nav.primary-nav.is-open{
+      transform:translateX(0);
+      visibility:visible;
+    }
+    nav.primary-nav ul{ flex-direction:column; gap:.5rem; }
+    nav.primary-nav a{ display:block; padding:.9rem 1rem; font-size:1.15rem; border-radius:var(--radius); }
+    .nav-close{
+      display:block;
+      position:absolute;
+      top:1.1rem;
+      right:1.25rem;
+      background:none;
+      border:1px solid var(--paper);
+      color:var(--paper);
+      padding:.4rem .7rem;
+      border-radius:var(--radius);
+      font-size:1.1rem;
+    }
+  }
+  @media (min-width:1024px){
+    .stats-grid{ grid-template-columns:repeat(4,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header class="site-header">
+  <div class="brand">
+    <span class="brand-mark">Ledger</span>
+    <span class="brand-tag">student finance</span>
+  </div>
+  <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="primary-nav-list" aria-label="Open navigation menu">&#9776;</button>
+  <nav class="primary-nav" id="primary-nav" aria-label="Primary">
+    <button class="nav-close" id="nav-close" aria-label="Close navigation menu">&times;</button>
+    <ul id="primary-nav-list">
+      <li><a href="#about" aria-current="page">About</a></li>
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#records">Records</a></li>
+      <li><a href="#form-section">Add / Edit</a></li>
+      <li><a href="#settings">Settings</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main-content">
+
+  <!-- ===================== ABOUT ===================== -->
+  <section id="about" aria-labelledby="about-heading">
+    <h2 id="about-heading"><span class="eyebrow">Section 01</span>About</h2>
+    <div class="about-card">
+      <p><strong>Ledger</strong> is a lightweight, accessible finance tracker built for students managing a small,
+      irregular budget &mdash; cafeteria lunches, bus fare, the occasional textbook. Everything is stored locally
+      in your browser.</p>
+      
+      <div class="about-links">
+        <a href="https://github.com/" target="_blank" rel="noopener">GitHub repository</a>
+        <a href="mailto:student@example.edu">Contact</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section id="dashboard" aria-labelledby="dashboard-heading">
+    <h2 id="dashboard-heading"><span class="eyebrow">Section 02</span>Dashboard</h2>
+
+    <div class="stats-grid" role="group" aria-label="Summary statistics">
+      <div class="stat-cell">
+        <span class="stat-label">Total records</span>
+        <span class="stat-value" id="stat-total-records">0</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-label">Total spent (RWF)</span>
+        <span class="stat-value" id="stat-total-amount">0</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-label">Top category</span>
+        <span class="stat-value" id="stat-top-category">&mdash;</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-label">Last 7 days</span>
+        <span class="stat-value" id="stat-week-total">0</span>
+      </div>
+    </div>
+
+    <div class="cap-bar-wrap">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem;">
+        <strong>Spending cap</strong>
+        <span id="cap-amount-display" style="font-family:var(--mono-font); font-size:.85rem; color:var(--ink-soft);"></span>
+      </div>
+      <div class="cap-bar-track">
+        <div class="cap-bar-fill" id="cap-bar-fill"></div>
+      </div>
+      <p id="cap-message" role="status" aria-live="polite">Set a cap in Settings to track your spending.</p>
+    </div>
+
+    <div>
+      <strong style="font-size:.9rem;">Last 7 days trend</strong>
+      <div class="trend-row" id="trend-row" role="img" aria-label="Bar chart of spending over the last 7 days"></div>
+    </div>
+  </section>
+
+  <!-- ===================== RECORDS ===================== -->
+  <section id="records" aria-labelledby="records-heading">
+    <h2 id="records-heading"><span class="eyebrow">Section 03</span>Records</h2>
+
+    <div class="table-toolbar">
+      <div class="field">
+        <label for="search-input">Search (supports regex)</label>
+        <input type="text" id="search-input" placeholder="e.g. coffee|tea or \.\d{2}\b" aria-describedby="search-status">
+      </div>
+      <label class="toolbar-checkbox">
+        <input type="checkbox" id="search-case-insensitive" checked>
+        Case-insensitive
+      </label>
+      <span id="search-status" role="status" aria-live="polite" class="visually-hidden"></span>
+    </div>
+
+  <table class="ledger-table" id="ledger-table">
+  <caption>Transaction records &mdash; click column headers to sort</caption>
+  <thead>
+    <tr>
+      <th scope="col">
+        <button type="button" id="sort-date" data-sort="date" aria-label="Sort by date">Date <span aria-hidden="true">&#8597;</span></button>
+      </th>
+      <th scope="col">
+        <button type="button" id="sort-description" data-sort="description" aria-label="Sort by description">Description <span aria-hidden="true">&#8597;</span></button>
+      </th>
+      
+      <th scope="col">
+        <button type="button" id="sort-category" data-sort="category" aria-label="Sort by category">Category <span aria-hidden="true">&#8597;</span></button>
+      </th>
+      
+      <th scope="col">
+        <button type="button" id="sort-amount" data-sort="amount" aria-label="Sort by amount">Amount <span aria-hidden="true">&#8597;</span></button>
+      </th>
+      <th scope="col"><span class="visually-hidden">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody id="ledger-table-body">
+    </tbody>
+</table>
+        </tr>
+      </thead>
+      <tbody id="ledger-table-body">
+        <!-- rows injected by app.js -->
+      </tbody>
+    </table>
+
+    <div class="record-cards" id="record-cards">
+      <!-- mobile cards injected by app.js -->
+    </div>
+
+    <div class="empty-state" id="empty-state" hidden>
+      <span class="empty-icon" aria-hidden="true">&#128179;</span>
+      <p>No records yet. Add your first transaction below, or import a JSON file in Settings.</p>
+    </div>
+  </section>
+
+  <!-- ===================== FORM ===================== -->
+  <section id="form-section" aria-labelledby="form-heading">
+    <h2 id="form-heading"><span class="eyebrow">Section 04</span><span id="form-mode-label">Add a transaction</span></h2>
+
+    <form class="ledger-form" id="ledger-form" novalidate>
+      <input type="hidden" id="record-id" value="">
+      <div class="form-grid">
+
+        <div class="field field-full">
+          <label for="field-description">Description</label>
+          <input type="text" id="field-description" name="description" autocomplete="off"
+                 aria-describedby="error-description hint-description" aria-invalid="false">
+          <span class="field-hint" id="hint-description">No leading/trailing spaces, no double spaces.</span>
+          <span class="field-error" id="error-description" role="alert"></span>
+        </div>
+
+        <div class="field">
+          <label for="field-amount">Amount (RWF)</label>
+          <input type="text" id="field-amount" name="amount" inputmode="decimal"
+                 aria-describedby="error-amount hint-amount" aria-invalid="false">
+          <span class="field-hint" id="hint-amount">Up to 2 decimal places, e.g. 12.50</span>
+          <span class="field-error" id="error-amount" role="alert"></span>
+        </div>
+
+        <div class="field">
+          <label for="field-date">Date</label>
+          <input type="text" id="field-date" name="date" placeholder="YYYY-MM-DD"
+                 aria-describedby="error-date hint-date" aria-invalid="false">
+          <span class="field-hint" id="hint-date">Format: YYYY-MM-DD</span>
+          <span class="field-error" id="error-date" role="alert"></span>
+        </div>
+
+        <div class="field field-full">
+          <label for="field-category">Category</label>
+          <select id="field-category" name="category" aria-describedby="error-category">
+            <option value="Food">Food</option>
+            <option value="Books">Books</option>
+            <option value="Transport">Transport</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Fees">Fees</option>
+            <option value="Other">Other</option>
+          </select>
+          <span class="field-error" id="error-category" role="alert"></span>
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="form-submit-btn">Save transaction</button>
+        <button type="button" class="btn-secondary" id="form-cancel-btn" hidden>Cancel edit</button>
+      </div>
+      <p id="form-status" role="status" aria-live="polite" class="visually-hidden"></p>
+    </form>
+  </section>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <section id="settings" aria-labelledby="settings-heading">
+    <h2 id="settings-heading"><span class="eyebrow">Section 05</span>Settings</h2>
+
+    <div class="settings-grid">
+
+      <div class="settings-card">
+        <h3>Spending cap</h3>
+        <div class="field">
+          <label for="field-cap">Monthly cap (RWF)</label>
+          <input type="text" id="field-cap" inputmode="decimal" placeholder="e.g. 50000">
+        </div>
+        <button type="button" class="btn-primary btn-small" id="save-cap-btn" style="margin-top:.5rem;">Save cap</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>Exchange rates <span style="font-size:.7rem; color:var(--ink-soft); font-weight:400;">(base: RWF)</span></h3>
+        <div class="rate-row">
+          <label for="rate-usd">1 USD =</label>
+          <input type="text" id="rate-usd" inputmode="decimal" placeholder="RWF amount">
+        </div>
+        <div class="rate-row">
+          <label for="rate-eur">1 EUR =</label>
+          <input type="text" id="rate-eur" inputmode="decimal" placeholder="RWF amount">
+        </div>
+        <button type="button" class="btn-primary btn-small" id="save-rates-btn">Save rates</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>Import / Export</h3>
+        <p class="field-hint">Export all records as JSON, or import a previously exported file. Imported files are validated before loading.</p>
+        <div class="import-export-row">
+          <button type="button" class="btn-secondary btn-small" id="export-btn">Export JSON</button>
+          <label class="btn-secondary btn-small" style="cursor:pointer;">
+            Import JSON
+            <input type="file" id="import-file-input" accept="application/json" class="visually-hidden">
+          </label>
+        </div>
+        <p id="import-status" role="status" aria-live="polite" style="font-size:.8rem; margin-top:.5rem;"></p>
+      </div>
+
+      <div class="settings-card">
+        <h3>Danger zone</h3>
+        <p class="field-hint">Permanently remove all stored records from this browser.</p>
+        <button type="button" class="btn-danger btn-small" id="clear-all-btn">Clear all data</button>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>Ledger &mdash; built with vanilla HTML, CSS &amp; JavaScript. Data stays in your browser (localStorage).
+  See the <a href="README.md">README</a> for the regex catalog and keyboard map.</p>
+</footer>
+
+<!-- Confirm dialog for deletes -->
+<dialog id="confirm-dialog">
+  <h3>Delete this transaction?</h3>
+  <p id="confirm-dialog-text">This action cannot be undone.</p>
+  <div class="dialog-actions">
+    <button type="button" class="btn-secondary" id="confirm-cancel-btn">Cancel</button>
+    <button type="button" class="btn-danger" id="confirm-delete-btn">Delete</button>
+  </div>
+</dialog>
+
+<!-- Toast / live announcement region -->
+<div id="toast-region" aria-live="assertive" aria-atomic="true"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
